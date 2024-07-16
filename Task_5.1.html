@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-repeat: no-repeat;
+            background-size: cover;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        .container {
+            text-align: center;
+        }
+        h1{
+            font-family: "Lobster", sans-serif;
+             font-weight: 400;
+             font-style: normal;
+             margin-bottom: 100px;
+             font-size: 80px;
+             
+
+        }
+
+        .weather-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 60px;
+            max-width: 400px;
+            margin: 40px;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .weather-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .location {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .weather-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .temperature {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .description {
+            margin-top: 10px;
+            text-transform: capitalize;
+        }
+
+        .icon img {
+            width: 80px;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-container input {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .search-container button {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather App</h1>
+        <div class="search-container">
+            <input type="text" id="locationInput" placeholder="Enter location">
+            <button id="searchButton">Search</button>
+        </div>
+        <div class="weather-card">
+            <div class="location">Loading...</div>
+            <div class="weather-info">
+                <div class="temperature">--°C</div>
+                <div class="description">--</div>
+                <div class="icon"><img src="IMG/weather.png" alt="Weather Icon"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const apiKey = '38b4002380f3462280501e9cb1b9ab6f';
+            const locationInput = document.getElementById('locationInput');
+            const searchButton = document.getElementById('searchButton');
+
+            // Function to fetch weather data based on geolocation
+            function fetchWeatherByGeolocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(async position => {
+                        const { latitude, longitude } = position.coords;
+                        const apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${apiKey}`;
+
+                        try {
+                            const response = await fetch(apiUrl);
+                            if (!response.ok) {
+                                throw new Error('Weather data not available');
+                            }
+                            const data = await response.json();
+                            updateWeather(data);
+                        } catch (error) {
+                            console.error('Error fetching weather data:', error);
+                        }
+                    }, error => {
+                        console.error('Error getting location:', error);
+                    });
+                } else {
+                    console.error('Geolocation is not supported by this browser.');
+                }
+            }
+
+            // Function to fetch weather data based on location name
+            async function fetchWeatherByLocation(location) {
+                const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`;
+                try {
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Weather data not available');
+                    }
+                    const data = await response.json();
+                    updateWeather(data);
+                } catch (error) {
+                    console.error('Error fetching weather data:', error);
+                }
+            }
+
+            // Update weather information in the UI
+            function updateWeather(data) {
+                const locationElement = document.querySelector('.location');
+                const temperatureElement = document.querySelector('.temperature');
+                const descriptionElement = document.querySelector('.description');
+                const iconElement = document.querySelector('.icon img');
+                const bodyElement = document.body;
+
+                locationElement.textContent = `${data.name}, ${data.sys.country}`;
+                temperatureElement.textContent = `${Math.round(data.main.temp)}°C`;
+                descriptionElement.textContent = data.weather[0].description;
+                iconElement.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
+
+                // Change background image based on weather condition
+                const weatherMain = data.weather[0].main.toLowerCase();
+                let backgroundImage;
+
+                switch (weatherMain) {
+                    case 'clear':
+                        backgroundImage = 'url("image/clear_sky.jpg") ';
+                        break;
+                    case 'clouds':
+                        backgroundImage = 'url("image/cloudy.jpg") ';
+                        break;
+                    case 'rain':
+                        backgroundImage = 'url("image/rainy.jpg")';
+                        break;
+                    case 'snow':
+                        backgroundImage = 'url("image/snowy.jpg")';
+                        break;
+                    case 'thunderstorm':
+                        backgroundImage = 'url("image/thunderstorm.jpg")';
+                        break;
+                    case 'drizzle':
+                        backgroundImage = 'url("IMG/drizzle.jpg")';
+                        break;
+                    case 'mist':
+                    case 'fog':
+                        backgroundImage = 'url("IMG/mist.jpg")';
+                        break;
+                    default:
+                        backgroundImage = 'url("IMG/default.jpg")';
+                        break;
+                }
+
+                bodyElement.style.backgroundImage = backgroundImage;
+            }
+
+            // Event listener for search button
+            searchButton.addEventListener('click', () => {
+                const location = locationInput.value.trim();
+                if (location) {
+                    fetchWeatherByLocation(location);
+                } else {
+                    alert('Please enter a location.');
+                }
+            });
+
+            // Fetch weather data based on geolocation on initial load
+            fetchWeatherByGeolocation();
+        });
+    </script>
+</body>
+</html>
